@@ -12,47 +12,31 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
 func ConnectDB() {
-	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Read DB config from environment
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	schema := os.Getenv("DB_SCHEMA")
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_SCHEMA"),
+	)
 
-	// Format DSN with schema
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
-		host, user, password, dbname, port, schema)
-
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	models.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Fatalf("❌ Failed to connect to database: %v", err)
 	}
 
-	sqlDB, err := DB.DB()
+	err = models.DB.AutoMigrate(&models.User{}, &models.Expense{})
 	if err != nil {
-		log.Fatalf("Failed to get db instance from GORM: %v", err)
+		log.Fatal("❌ Auto migration failed:", err)
 	}
 
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Fatalf("Database ping failed: %v", err)
-	}
-
-	// Auto migrate models
-	err = DB.AutoMigrate(&models.User{}, &models.Expense{})
-	if err != nil {
-		log.Fatal("Failed to auto migrate:", err)
-	}
-
-	fmt.Printf("✅ Database connected successfully with schema: %s\n", schema)
+	fmt.Println("✅ Database connected successfully")
 }

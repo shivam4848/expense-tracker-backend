@@ -10,7 +10,7 @@ type User struct {
 	gorm.Model
 	Name              string `json:"name"`
 	Email             string `json:"email" gorm:"unique"`
-	Password          string `json:"password"`
+	Password          string `json:"-"`
 	ProfilePhoto      string `json:"profile_photo"`
 	EmailVerified     bool   `json:"email_verified"`
 	VerificationToken string `json:"verification_token"`

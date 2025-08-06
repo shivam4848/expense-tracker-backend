@@ -1,26 +1,21 @@
 package main
 
 import (
-	"log"
-
 	"expense-tracker-backend/database"
 	"expense-tracker-backend/routes"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	r := gin.Default()
+
+	// Connect to DB
 	database.ConnectDB()
 
-	r := gin.Default()
-	r.Static("/uploads", "./uploads")
-
+	// Setup routes
 	routes.SetupRoutes(r)
 
-	r.Run()
+	// Start server
+	r.Run(":8080")
 }
