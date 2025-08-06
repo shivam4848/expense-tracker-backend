@@ -3,26 +3,41 @@ package database
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"expense-tracker-backend/models"
+
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"expense-trackert-backend/models"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
-	// Add schema using search_path
-	dsn := "host=localhost user=postgres password=root dbname=expense-tracker-backend port=5432 sslmode=disable search_path=expense-tracker-backend-master-schema"
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	var err error
+	// Read DB config from environment
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	schema := os.Getenv("DB_SCHEMA")
+
+	// Format DSN with schema
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
+		host, user, password, dbname, port, schema)
+
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	// Validate the connection by pinging the DB
 	sqlDB, err := DB.DB()
 	if err != nil {
 		log.Fatalf("Failed to get db instance from GORM: %v", err)
@@ -33,11 +48,11 @@ func ConnectDB() {
 		log.Fatalf("Database ping failed: %v", err)
 	}
 
-	// Auto migrate your models
-	err = DB.AutoMigrate(&models.User{}, &models.Task{})
+	// Auto migrate models
+	err = DB.AutoMigrate(&models.User{}, &models.Expense{})
 	if err != nil {
 		log.Fatal("Failed to auto migrate:", err)
 	}
 
-	fmt.Println("Database connected successfully with schema: expense-tracker-backend-master-schema")
+	fmt.Printf("✅ Database connected successfully with schema: %s\n", schema)
 }
